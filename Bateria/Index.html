@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DApp - Cadastro de Baterias</title>
+
+  <!-- Google Fonts e CSS -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+  <!-- Ícone da MetaMask -->
+  <div class="fox-container">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="MetaMask Fox" class="fox-img">
+    <div class="fox-eyes">
+      <div class="eye"><div class="pupil" id="pupil-left"></div></div>
+      <div class="eye"><div class="pupil" id="pupil-right"></div></div>
+    </div>
+  </div>
+
+  <h1>🔋 DApp: Cadastro de Baterias</h1>
+
+  <!-- Cadastro -->
+  <div class="container">
+    <h2>Registrar Nova Bateria</h2>
+    <input type="text" id="tipo" placeholder="Tipo da bateria (ex: Lítio)" />
+    <input type="text" id="uso" placeholder="Uso (ex: Carro)" />
+    <input type="number" id="nr_serie" placeholder="Número de série" />
+    <input type="number" id="dataprod" placeholder="Ano de produção" />
+    <input type="number" id="lote" placeholder="Lote" />
+    <button onclick="registrarBateria()">Registrar</button>
+  </div>
+
+  <!-- Lista -->
+  <div class="container">
+    <h2>Lista de Baterias</h2>
+    <button onclick="listarBaterias()">Atualizar Lista</button>
+    <div class="output" id="listaBaterias"></div>
+  </div>
+
+  <!-- Remoção -->
+  <div class="container">
+    <h2>Remover Bateria</h2>
+    <input type="number" id="idRemover" placeholder="ID da bateria" />
+    <button onclick="removerBateria()">Remover</button>
+  </div>
+
+  <!-- web3.js -->
+  <script src="https://cdn.jsdelivr.net/npm/web3@1.8.2/dist/web3.min.js"></script>
+
+  <!-- Animação dos olhos (opcional) -->
+  <script>
+    document.addEventListener("mousemove", (event) => {
+      const eyes = [document.getElementById('pupil-left'), document.getElementById('pupil-right')];
+      eyes.forEach((pupil) => {
+        const rect = pupil.parentElement.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const dx = event.clientX - centerX;
+        const dy = event.clientY - centerY;
+        const angle = Math.atan2(dy, dx);
+        const distance = Math.min(4, Math.hypot(dx, dy) / 20);
+        const offsetX = Math.cos(angle) * distance;
+        const offsetY = Math.sin(angle) * distance;
+        pupil.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+      });
+    });
+  </script>
+
+  <!-- Lógica Web3 -->
+  <script>
+    const abi = [
+      {
+        "inputs": [],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+      },
+      {
+        "inputs": [
+          { "internalType": "string", "name": "_tipo", "type": "string" },
+          { "internalType": "string", "name": "_uso", "type": "string" },
+          { "internalType": "uint256", "name": "_nr_serie", "type": "uint256" },
+          { "internalType": "uint256", "name": "_dataprod", "type": "uint256" },
+          { "internalType": "uint256", "name": "_lote", "type": "uint256" }
+        ],
+        "name": "cadastrarBateria",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "listarBaterias",
+        "outputs": [
+          {
+            "components": [
+              { "internalType": "address", "name": "endereco", "type": "address" },
+              { "internalType": "string", "name": "tipo", "type": "string" },
+              { "internalType": "string", "name": "uso", "type": "string" },
+              { "internalType": "uint256", "name": "nr_serie", "type": "uint256" },
+              { "internalType": "uint256", "name": "dataprod", "type": "uint256" },
+              { "internalType": "uint256", "name": "lote", "type": "uint256" }
+            ],
+            "internalType": "struct CadastroBateria.Cadastro[]",
+            "name": "",
+            "type": "tuple[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [{ "internalType": "uint256", "name": "_id", "type": "uint256" }],
+        "name": "removerBaterias",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    ];
+
+    const contratoEndereco = "0x7e018Ddc53667e75F1801ceD2866C549599E2F87"; // <-- Substitua pelo endereço do contrato
+
+    let web3;
+    let contrato;
+    let conta;
+
+    async function conectar() {
+      if (window.ethereum) {
+        web3 = new Web3(window.ethereum);
+        await window.ethereum.request({ method: "eth_requestAccounts" });
+        const contas = await web3.eth.getAccounts();
+        conta = contas[0];
+        contrato = new web3.eth.Contract(abi, contratoEndereco);
+      } else {
+        alert("MetaMask não detectado.");
+      }
+    }
+
+    async function registrarBateria() {
+      await conectar();
+      const tipo = document.getElementById("tipo").value;
+      const uso = document.getElementById("uso").value;
+      const nr_serie = document.getElementById("nr_serie").value;
+      const dataprod = document.getElementById("dataprod").value;
+      const lote = document.getElementById("lote").value;
+
+      if (!tipo || !uso || !nr_serie || !dataprod || !lote) {
+        return alert("Preencha todos os campos.");
+      }
+
+      try {
+        await contrato.methods.cadastrarBateria(tipo, uso, nr_serie, dataprod, lote).send({ from: conta });
+        alert("Bateria registrada com sucesso!");
+        listarBaterias();
+      } catch (err) {
+        console.error(err);
+        alert("Erro ao registrar bateria.");
+      }
+    }
+
+    async function listarBaterias() {
+      await conectar();
+      try {
+        const baterias = await contrato.methods.listarBaterias().call();
+        const lista = document.getElementById("listaBaterias");
+        lista.innerHTML = "";
+
+        baterias.forEach((bateria, index) => {
+        const card = document.createElement("div");
+        card.className = "bateria-card";
+        card.innerHTML = `
+            <strong>ID:</strong> ${index}<br>
+            <strong>Tipo:</strong> ${bateria.tipo}<br>
+            <strong>Uso:</strong> ${bateria.uso}<br>
+            <strong>Nº Série:</strong> ${bateria.nr_serie}<br>
+            <strong>Ano:</strong> ${bateria.dataprod}<br>
+            <strong>Lote:</strong> ${bateria.lote}
+        `;
+        lista.appendChild(card);
+        });
+
+
+        if (baterias.length === 0) {
+          lista.innerHTML = "<li>Nenhuma bateria cadastrada.</li>";
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Erro ao listar baterias.");
+      }
+    }
+
+    async function removerBateria() {
+      await conectar();
+      const id = document.getElementById("idRemover").value;
+      if (!id) return alert("Informe um ID.");
+
+      try {
+        await contrato.methods.removerBaterias(id).send({ from: conta });
+        alert("Bateria removida.");
+        listarBaterias();
+      } catch (err) {
+        console.error(err);
+        alert("Erro ao remover bateria.");
+      }
+    }
+  </script>
+</body>
+</html>

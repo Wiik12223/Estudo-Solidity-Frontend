@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DApp - Admin Proxy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+  <!-- Raposa -->
+  <div class="fox-container">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="MetaMask Fox" class="fox-img">
+    <div class="fox-eyes">
+      <div class="eye"><div class="pupil" id="pupil-left"></div></div>
+      <div class="eye"><div class="pupil" id="pupil-right"></div></div>
+    </div>
+  </div>
+
+  <h1>🦊 DApp: Gerenciar Proxy (Upgrade)</h1>
+
+  <!-- Ver Admin -->
+  <div class="container">
+    <h2>Admin do Contrato</h2>
+    <button onclick="verAdmin()">Ver Admin</button>
+    <p id="adminContrato">Clique para ver o endereço</p>
+  </div>
+
+  <!-- Ver implementação atual -->
+  <div class="container">
+    <h2>Implementação Atual</h2>
+    <button onclick="verImplementation()">Ver Implementação</button>
+    <p id="implementacaoAtual">Clique para ver o endereço</p>
+  </div>
+
+  <!-- Atualizar Implementação -->
+  <div class="container">
+    <h2>Atualizar Implementação</h2>
+    <label for="novaImpl">Novo Endereço:</label>
+    <input type="text" id="novaImpl" placeholder="0x..."/>
+    <button onclick="atualizarImplementacao()">Atualizar</button>
+  </div>
+
+  <!-- Web3.js -->
+  <script src="https://cdn.jsdelivr.net/npm/web3@1.8.2/dist/web3.min.js"></script>
+
+  <!-- Animação olhos -->
+  <script>
+    document.addEventListener("mousemove", (event) => {
+      const eyes = [document.getElementById('pupil-left'), document.getElementById('pupil-right')];
+      eyes.forEach((pupil) => {
+        const rect = pupil.parentElement.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const dx = event.clientX - centerX;
+        const dy = event.clientY - centerY;
+        const angle = Math.atan2(dy, dx);
+        const distance = Math.min(4, Math.hypot(dx, dy) / 20);
+        const offsetX = Math.cos(angle) * distance;
+        const offsetY = Math.sin(angle) * distance;
+        pupil.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+      });
+    });
+  </script>
+
+  <!-- Web3 Lógica -->
+  <script>
+    const abi = [
+      {
+        "inputs": [{"internalType": "address", "name": "nova", "type": "address"}],
+        "name": "atualizarImplementacao",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [{"internalType": "address", "name": "_implementation", "type": "address"}],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+      },
+      {"stateMutability": "payable", "type": "fallback"},
+      {"stateMutability": "payable", "type": "receive"},
+      {
+        "inputs": [],
+        "name": "admin",
+        "outputs": [{"internalType": "address", "name": "", "type": "address"}],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "implementation",
+        "outputs": [{"internalType": "address", "name": "", "type": "address"}],
+        "stateMutability": "view",
+        "type": "function"
+      }
+    ];
+
+    const contratoEndereco = "0x93cBBf49f97e6b3307C33b70854BC29061A9fA74";
+
+    let web3;
+    let contrato;
+    let conta;
+
+    async function conectar() {
+      if (window.ethereum) {
+        web3 = new Web3(window.ethereum);
+        await window.ethereum.request({ method: "eth_requestAccounts" });
+        const contas = await web3.eth.getAccounts();
+        conta = contas[0];
+        contrato = new web3.eth.Contract(abi, contratoEndereco);
+      } else {
+        alert("MetaMask não está instalado.");
+      }
+    }
+
+    async function verAdmin() {
+      await conectar();
+      try {
+        const admin = await contrato.methods.admin().call();
+        document.getElementById("adminContrato").innerText = `Admin: ${admin}`;
+      } catch (err) {
+        console.error(err);
+        alert("Erro ao obter admin.");
+      }
+    }
+
+    async function verImplementation() {
+      await conectar();
+      try {
+        const impl = await contrato.methods.implementation().call();
+        document.getElementById("implementacaoAtual").innerText = `Implementação: ${impl}`;
+      } catch (err) {
+        console.error(err);
+        alert("Erro ao obter implementação.");
+      }
+    }
+
+    async function atualizarImplementacao() {
+      const novoEnd = document.getElementById("novaImpl").value;
+      if (!web3.utils.isAddress(novoEnd)) {
+        return alert("Endereço inválido.");
+      }
+
+      await conectar();
+      try {
+        await contrato.methods.atualizarImplementacao(novoEnd).send({ from: conta });
+        alert("Implementação atualizada com sucesso!");
+        verImplementation(); // Atualiza na tela
+      } catch (err) {
+        console.error(err);
+        alert("Erro ao atualizar implementação.");
+      }
+    }
+  </script>
+</body>
+</html>
