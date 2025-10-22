@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DApp - Registro de Nome</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+  <!-- 🦊 Raposa interativa -->
+  <div class="fox-container">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" alt="MetaMask Fox" class="fox-img">
+    <div class="fox-eyes">
+      <div class="eye"><div class="pupil" id="pupil-left"></div></div>
+      <div class="eye"><div class="pupil" id="pupil-right"></div></div>
+    </div>
+  </div>
+
+  <h1>🦊 Registro de nome (DApp)</h1>
+
+  <div class="container">
+    <h2>Registro de Nome</h2>
+    <label for="nome">༼ つ ◕_◕ ༽つ Seu nome:</label>
+    <input type="text" id="nome" placeholder="Digite seu nome" />
+    <button onclick="registrarNome()">🪙 Registrar Nome 🪙</button>
+  </div>
+
+  <div class="container">
+    <h2> ₍^. .^₎⟆ Consultar Nome</h2>
+    <label for="endereco">Endereço:</label>
+    <input type="text" id="endereco" placeholder="0x..." />
+    <button onclick="consultarNome()">Consultar</button>
+
+    <div class="resultado-box">
+      <p><strong>Resultado:</strong> <span id="resultado"></span></p>
+    </div>
+  </div>
+
+  <!-- web3.js -->
+  <script src="https://cdn.jsdelivr.net/npm/web3@1.8.2/dist/web3.min.js"></script>
+
+  <!-- JavaScript da raposa -->
+  <script>
+    document.addEventListener("mousemove", (event) => {
+      const eyes = [document.getElementById('pupil-left'), document.getElementById('pupil-right')];
+
+      eyes.forEach((pupil) => {
+        const rect = pupil.parentElement.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+
+        const dx = event.clientX - centerX;
+        const dy = event.clientY - centerY;
+
+        const angle = Math.atan2(dy, dx);
+        const distance = Math.min(4, Math.hypot(dx, dy) / 20); // máximo 4px
+
+        const offsetX = Math.cos(angle) * distance;
+        const offsetY = Math.sin(angle) * distance;
+
+        pupil.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+      });
+    });
+  </script>
+
+  <!-- Lógica Web3 -->
+  <script>
+    const abi = [
+      {
+        "inputs": [{"internalType": "string", "name": "nm", "type": "string"}],
+        "name": "registrarNome",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [{"internalType": "address", "name": "a", "type": "address"}],
+        "name": "consultarNome",
+        "outputs": [{"internalType": "string", "name": "", "type": "string"}],
+        "stateMutability": "view",
+        "type": "function"
+      }
+    ];
+
+    const contratoEndereco = "0x32F3EB35C6577Bd25CEA43045AFF2B44511FfE9C";
+
+    let web3;
+    let contrato;
+    let conta;
+
+    async function conectar() {
+      if (window.ethereum) {
+        web3 = new Web3(window.ethereum);
+        await window.ethereum.request({ method: "eth_requestAccounts" });
+        const contas = await web3.eth.getAccounts();
+        conta = contas[0];
+        contrato = new web3.eth.Contract(abi, contratoEndereco);
+        console.log("Conectado:", conta);
+      } else {
+        alert("MetaMask não detectado!");
+      }
+    }
+
+    async function registrarNome() {
+      const nome = document.getElementById("nome").value;
+      if (!nome) return alert("Digite um nome.");
+
+      await conectar();
+      try {
+        await contrato.methods.registrarNome(nome).send({ from: conta });
+        alert("Nome registrado com sucesso!");
+      } catch (err) {
+        console.error(err);
+        alert("Erro ao registrar nome.");
+      }
+    }
+
+    async function consultarNome() {
+      const endereco = document.getElementById("endereco").value;
+      if (!web3.utils.isAddress(endereco)) return alert("Endereço inválido.");
+
+      await conectar();
+      try {
+        const nome = await contrato.methods.consultarNome(endereco).call();
+        document.getElementById("resultado").innerText = nome || "(sem nome registrado)";
+      } catch (err) {
+        console.error(err);
+        alert("Erro ao consultar nome.");
+      }
+    }
+  </script>
+</body>
+</html>
