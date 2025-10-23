@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Cadastro de Baterias — Web3</title>
+
+  <!-- Fonte -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- ethers.js v5 -->
+  <script src="https://cdn.jsdelivr.net/npm/web3@1.10.4/dist/web3.min.js"></script>
+
+  <!-- CSS separado -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="wrap">
+    <header class="hero">
+      <div class="badge">⚡ Gestão de Baterias em Web3</div>
+      <h1>Cadastro, listagem e remoção<br/>direto no seu contrato</h1>
+      <p>Baseado no seu layout do Canva, mas agora <strong>funcional</strong> com MetaMask + ethers.js.</p>
+
+      <div class="cta">
+        <button id="btnConnect" class="btn btn-primary">🦊 Conectar carteira</button>
+        <span id="connectedBox" class="pill" style="display:none">
+          <span class="status-dot status-ok"></span>
+          <span id="shortAccount">Conectado</span>
+        </span>
+        <span class="tag">ABI: cadastrar • listar • remover</span>
+      </div>
+    </header>
+
+    <section class="grid">
+      <!-- Formulário de cadastro -->
+      <div class="card">
+        <h2>➕ Cadastrar Bateria</h2>
+        <div class="row">
+          <div class="field">
+            <label for="tipo">Tipo</label>
+            <input id="tipo" type="text" placeholder="Ex.: Chumbo-Ácido, Íon-Lítio" />
+          </div>
+          <div class="field">
+            <label for="uso">Uso</label>
+            <input id="uso" type="text" placeholder="Ex.: Automotiva, Estacionária" />
+          </div>
+        </div>
+
+        <div class="row-3" style="margin-top:10px">
+          <div class="field">
+            <label for="nr_serie">Nº de Série</label>
+            <input id="nr_serie" type="number" inputmode="numeric" placeholder="Ex.: 123456" />
+          </div>
+          <div class="field">
+            <label for="dataprod">Data de Produção</label>
+            <input id="dataprod" type="date" />
+            <div class="hint">Será convertido para timestamp (epoch) no envio.</div>
+          </div>
+          <div class="field">
+            <label for="lote">Lote</label>
+            <input id="lote" type="number" inputmode="numeric" placeholder="Ex.: 42" />
+          </div>
+        </div>
+
+        <div class="divider"></div>
+        <div style="display:flex; gap:12px; flex-wrap:wrap">
+          <button id="btnCadastrar" class="btn btn-primary">Cadastrar</button>
+          <button id="btnLimpar" class="btn btn-muted">Limpar</button>
+          <span id="statusCadastro" class="pill"><span class="status-dot" id="dotCadastro"></span><span id="msgCadastro">Aguardando...</span></span>
+        </div>
+      </div>
+
+      <!-- Listagem / Remoção -->
+      <div class="card">
+        <h2>📋 Listar & Remover</h2>
+        <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:10px">
+          <button id="btnListar" class="btn btn-outline">Atualizar lista</button>
+          <span class="hint">Clique em “Atualizar lista” após cadastrar/remover.</span>
+        </div>
+        <div id="listaWrapper">
+          <div class="empty">Sem itens por enquanto. Clique em “Atualizar lista”.</div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      Feito com ❤️ + ethers.js. Lembre-se de definir o <strong>CONTRACT_ADDRESS</strong> antes de usar.
+    </footer>
+  </div>
+
+  <!-- JS separado -->
+  <script src="script.js"></script>
+</body>
+</html>
